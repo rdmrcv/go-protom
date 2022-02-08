@@ -8,14 +8,32 @@ Main reason to create this package is a [`protojson`](https://pkg.go.dev/google.
 package that encodes `proto` messages differently than an `encodying/json` package. This creates a big gap between
 ordinal golang structs and structs provided by a `protoc`.
 
-The lib solve that gap by provide two packages:
-
 ## [`Protobson`](pkg/protobson)
-This part is highly inspired by the original `protojson` package.
+### Message
+This package is highly inspired by the original `protojson` package but bound to the `go.mongodb.org/mongo-driver` 
+package.
 
-Also, I take a look at the great [`romnn/bsonpb`](https://github.com/romnn/bsonpb) package, but it is requires Bazel
-which I not use and not so tightly integrated with the MongoDB.
+The package provides codecs and a registry that compatible with the `mongo-dirver` and fits well into the `mongo-driver` 
+encode/decode process. The codec designed mostly as intermediate component who can encode and decode the `proto.Message`
+and leverage the `mongo-driver` registry machinery to encode or decode primitive types and lists/maps.
 
-## [`Registry`](pkg/registry)
-This package provides the registry that register hooks which will detect `proto.Message` and decode/encode them with a
-codec provided via the `protobson` package.
+### Enum
+Only special case is enums. Enums cannot be properly decoded because in `protoreflect` they represented as 
+the `protoreflect.EnumNumber` which completely loose an original enum type, so when we encode or decode an enum value 
+represented as string we cannot guess which enum we currently encode or decode.
+
+To solve this we have two ways:
+
+1. Embed the enum codec into the `ProtoMessageCodec`.
+2. Implement the `ProtoEnumCodec` and introduce special handling of the enum values in the `ProtoMessageCodec`
+
+In the protojson package implemented second solution. It decouple encode and decode of enums from
+the `ProtoMessageCodec`. But still introduce pretty ugly way to operate with enum fields in the message.
+
+## Usage:
+
+If you use a default registry from `mongo-driver` you can just overwrite it in client — registry provided by
+the `protobson.BsonPBRegistry` should be equal to default one, just with special hooks that will handle protobuf models.
+
+If you customize your registry — you should read the [`registry.go`](pkg/protobson/registry.go) file and see how you can
+add required codecs into registry.

@@ -1,4 +1,4 @@
-package codec
+package protobson
 
 import (
 	"github.com/rdmrcv/go-protom/pkg/internal"
@@ -15,11 +15,14 @@ func NewBsonPBRegistryBuilder() *bsoncodec.RegistryBuilder {
 	bsoncodec.DefaultValueDecoders{}.RegisterDefaultDecoders(rb)
 	bson.PrimitiveCodecs{}.RegisterPrimitiveCodecs(rb)
 
-	bpbcodec := NewProtoBsonCodec()
+	bpbcodec := NewProtoMessageCodec()
+	benumcodec := NewProtoEnumCodec()
 
 	rb.
-		RegisterHookEncoder(internal.TProto, bsoncodec.ValueEncoderFunc(bpbcodec.EncodeValue)).
-		RegisterHookDecoder(internal.TProto, bsoncodec.ValueDecoderFunc(bpbcodec.DecodeValue))
+		RegisterHookEncoder(internal.TProtoEnum, bsoncodec.ValueEncoderFunc(benumcodec.EncodeValue)).
+		RegisterHookDecoder(internal.TProtoEnum, bsoncodec.ValueDecoderFunc(benumcodec.DecodeValue)).
+		RegisterHookEncoder(internal.TProtoMessage, bsoncodec.ValueEncoderFunc(bpbcodec.EncodeValue)).
+		RegisterHookDecoder(internal.TProtoMessage, bsoncodec.ValueDecoderFunc(bpbcodec.DecodeValue))
 
 	return rb
 }

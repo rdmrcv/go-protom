@@ -4,13 +4,28 @@ package test;
 
 option go_package = "github.com/rdmrcv/go-protom/pkg/internal";
 
+enum EnumType {
+    TEST = 0;
+    ANOTHER = 1;
+}
+
 message Msg {
     Embed Field = 1;
 
     oneof Variant {
         string A = 2;
         string B = 3;
+
+        Embed C = 4;
     }
+
+    map<string, Embed> MapField = 15;
+
+    repeated Embed RepField = 20;
+
+    EnumType En = 25;
+    repeated EnumType RepEnum = 30;
+    map<uint32, EnumType> MapEnum = 50;
 }
 
 message Embed {

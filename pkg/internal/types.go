@@ -2,12 +2,13 @@ package internal
 
 import (
 	"reflect"
-	"time"
 
-	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 var (
-	TProto = reflect.TypeOf((*proto.Message)(nil)).Elem()
-	TTime  = reflect.TypeOf(time.Time{})
+	TProtoMessage = reflect.TypeOf((*protoreflect.ProtoMessage)(nil)).Elem()
+	TProtoMap     = reflect.TypeOf((*protoreflect.Map)(nil)).Elem()
+	TProtoList    = reflect.TypeOf((*protoreflect.List)(nil)).Elem()
+	TProtoEnum    = reflect.TypeOf((*protoreflect.Enum)(nil)).Elem()
 )

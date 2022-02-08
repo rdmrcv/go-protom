@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package test;
+
+option go_package = "github.com/rdmrcv/go-protom/pkg/internal";
+
+message Msg {
+    Embed Field = 1;
+
+    oneof Variant {
+        string A = 2;
+        string B = 3;
+    }
+}
+
+message Embed {
+    string Text = 2;
+}

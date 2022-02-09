@@ -12,6 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/bsonrw"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/reflect/protoregistry"
 )
 
 var errEncodeInvalidValue = errors.New("cannot encode invalid element")
@@ -42,6 +43,13 @@ type ProtoMessageCodec struct {
 
 	// If DiscardUnknown is set, unknown fields are ignored.
 	DiscardUnknown bool
+
+	// Resolver is used for looking up types when expanding google.protobuf.Any
+	// messages. If nil, this defaults to using protoregistry.GlobalTypes.
+	Resolver interface {
+		protoregistry.ExtensionTypeResolver
+		protoregistry.MessageTypeResolver
+	}
 }
 
 var _ bsoncodec.ValueEncoder = &ProtoMessageCodec{}
@@ -113,6 +121,12 @@ func (sc *ProtoMessageCodec) EncodeValue(r bsoncodec.EncodeContext, vw bsonrw.Va
 		ectx := bsoncodec.EncodeContext{Registry: r.Registry}
 		err = encoder.EncodeValue(ectx, vw2, rv2)
 		if err != nil {
+			return err
+		}
+	}
+
+	if !sc.AllowMarshalPartial {
+		if err := proto.CheckInitialized(protoMsg); err != nil {
 			return err
 		}
 	}
@@ -233,6 +247,12 @@ func (sc *ProtoMessageCodec) DecodeValue(r bsoncodec.DecodeContext, vr bsonrw.Va
 			} else {
 				protoDesc.Set(fd, decVal)
 			}
+		}
+	}
+
+	if !sc.AllowUnmarshalPartial {
+		if err := proto.CheckInitialized(protoMsg); err != nil {
+			return err
 		}
 	}
 

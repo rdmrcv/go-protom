@@ -1,6 +1,7 @@
 package types
 
 import (
+	"bytes"
 	"reflect"
 
 	"github.com/rdmrcv/go-protom/pkg/internal"
@@ -17,7 +18,7 @@ type ProtoDurationCodec struct {
 var _ bsoncodec.ValueEncoder = &ProtoDurationCodec{}
 var _ bsoncodec.ValueDecoder = &ProtoDurationCodec{}
 
-// NewProtoDurationCodec returns a ProtoDurationCodec that uses p for struct tag parsing.
+// NewProtoDurationCodec returns a ProtoDurationCodec.
 func NewProtoDurationCodec() *ProtoDurationCodec {
 	return &ProtoDurationCodec{}
 }
@@ -40,7 +41,7 @@ func (sc *ProtoDurationCodec) EncodeValue(r bsoncodec.EncodeContext, vw bsonrw.V
 	}
 
 	// Use the protojson as-is because here we want a raw not bson-specific string.
-	return vw.WriteString(string(bts))
+	return vw.WriteString(string(bytes.Trim(bts, "\"")))
 }
 
 // DecodeValue handles decoding of the `google.protobuf.Duration` message.
@@ -58,5 +59,5 @@ func (sc *ProtoDurationCodec) DecodeValue(r bsoncodec.DecodeContext, vr bsonrw.V
 	}
 
 	// Use the protojson as-is because here we have a raw not bson-specific string.
-	return protojson.Unmarshal([]byte(d), protoMsg)
+	return protojson.Unmarshal([]byte("\""+d+"\""), protoMsg)
 }

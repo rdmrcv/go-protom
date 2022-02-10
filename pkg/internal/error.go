@@ -1,4 +1,4 @@
-package protobson
+package internal
 
 import (
 	"fmt"
@@ -36,7 +36,7 @@ func (de *DecodeError) Keys() []string {
 	return reversedKeys
 }
 
-func newDecodeError(key string, original error) error {
+func NewDecodeError(key string, original error) error {
 	de, ok := original.(*DecodeError)
 	if !ok {
 		return &DecodeError{

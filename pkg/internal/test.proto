@@ -2,6 +2,12 @@ syntax = "proto3";
 
 package test;
 
+import 'google/protobuf/empty.proto';
+import 'google/protobuf/wrappers.proto';
+import 'google/protobuf/duration.proto';
+import 'google/protobuf/timestamp.proto';
+import 'google/protobuf/struct.proto';
+
 option go_package = "github.com/rdmrcv/go-protom/pkg/internal";
 
 enum EnumType {
@@ -30,4 +36,49 @@ message Msg {
 
 message Embed {
     string Text = 2;
+}
+
+message WKT {
+    google.protobuf.Empty EmptyField = 1;
+    repeated google.protobuf.Empty RepEmptyField = 2;
+
+    google.protobuf.Duration DurationField = 3;
+    repeated google.protobuf.Duration RepDurationField = 4;
+
+    google.protobuf.Timestamp TimestampField = 5;
+    repeated google.protobuf.Timestamp RepTimestampField = 6;
+
+    google.protobuf.Struct StructField = 7;
+    repeated google.protobuf.Struct RepStructField = 8;
+
+    google.protobuf.Value ValueField = 9;
+    repeated google.protobuf.Value RepValueField = 10;
+
+    google.protobuf.BoolValue BoolField = 11;
+    repeated google.protobuf.BoolValue RepBoolField = 12;
+
+    google.protobuf.BytesValue BytesField  = 13;
+    repeated google.protobuf.BytesValue RepBytesField = 14;
+
+    google.protobuf.StringValue StringField  = 15;
+    repeated google.protobuf.StringValue RepStringField = 16;
+
+    google.protobuf.Int32Value Int32Field  = 17;
+    repeated google.protobuf.Int32Value RepInt32Field = 18;
+
+    google.protobuf.Int64Value Int64Field  = 19;
+    repeated google.protobuf.Int64Value RepInt64Field = 20;
+
+    google.protobuf.UInt32Value UInt32Field  = 21;
+    repeated google.protobuf.UInt32Value RepUInt32Field = 22;
+
+    google.protobuf.UInt64Value UInt64Field  = 23;
+    repeated google.protobuf.UInt64Value RepUInt64Field = 24;
+
+    google.protobuf.FloatValue FloatField  = 25;
+    repeated google.protobuf.FloatValue RepFloatField = 26;
+
+    google.protobuf.DoubleValue DoubleField  = 27;
+    repeated google.protobuf.DoubleValue RepDoubleField = 28;
+
 }

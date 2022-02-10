@@ -31,19 +31,9 @@ func NewProtoEnumCodec() *ProtoEnumCodec {
 
 // EncodeValue handles encoding generic struct types.
 func (sc *ProtoEnumCodec) EncodeValue(r bsoncodec.EncodeContext, vw bsonrw.ValueWriter, val reflect.Value) error {
-	// Either val or a pointer to val must implement ValueMarshaler
-	switch {
-	case !val.IsValid():
-		return bsoncodec.ValueEncoderError{Name: "ProtoEnumEncodeValue", Types: []reflect.Type{internal.TProtoEnum}, Received: val}
-	case val.Type().Implements(internal.TProtoEnum):
-		// If ValueMarshaler is implemented on a concrete type, make sure that val isn't a nil pointer
-		if isImplementationNil(val, internal.TProtoEnum) {
-			return vw.WriteNull()
-		}
-	case reflect.PtrTo(val.Type()).Implements(internal.TProtoEnum) && val.CanAddr():
-		val = val.Addr()
-	default:
-		return bsoncodec.ValueEncoderError{Name: "ProtoEnumEncodeValue", Types: []reflect.Type{internal.TProtoEnum}, Received: val}
+	val, err := internal.PrepareInterfaceForEncode("ProtoEnumEncodeValue", val, internal.TProtoEnum)
+	if err != nil {
+		return err
 	}
 
 	protoMsg := val.Interface().(protoreflect.Enum)
@@ -59,22 +49,9 @@ func (sc *ProtoEnumCodec) EncodeValue(r bsoncodec.EncodeContext, vw bsonrw.Value
 // By default, map types in val will not be cleared. If a map has existing key/value pairs, it will be extended with the new ones from vr.
 // For slices, the decoder will set the length of the slice to zero and append all elements. The underlying array will not be cleared.
 func (sc *ProtoEnumCodec) DecodeValue(r bsoncodec.DecodeContext, vr bsonrw.ValueReader, val reflect.Value) error {
-	if !val.IsValid() || (!val.Type().Implements(internal.TProtoEnum) && !reflect.PtrTo(val.Type()).Implements(internal.TProtoEnum)) {
-		return bsoncodec.ValueDecoderError{Name: "ProtoEnumDecodeValue", Types: []reflect.Type{internal.TProtoEnum}, Received: val}
-	}
-
-	if val.Kind() == reflect.Ptr && val.IsNil() {
-		if !val.CanSet() {
-			return bsoncodec.ValueDecoderError{Name: "ProtoEnumDecodeValue", Types: []reflect.Type{internal.TProtoEnum}, Received: val}
-		}
-		val.Set(reflect.New(val.Type().Elem()))
-	}
-
-	if !val.Type().Implements(internal.TProtoEnum) {
-		if !val.CanAddr() {
-			return bsoncodec.ValueDecoderError{Name: "ProtoEnumDecodeValue", Types: []reflect.Type{internal.TProtoEnum}, Received: val}
-		}
-		val = val.Addr() // If they type doesn't implement the interface, a pointer to it must.
+	val, err := internal.PrepareInterfaceForDecode("ProtoEnumDecodeValue", val, internal.TProtoEnum)
+	if err != nil {
+		return err
 	}
 
 	protoMsg := val.Interface().(protoreflect.Enum)

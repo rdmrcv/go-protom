@@ -6,7 +6,7 @@ This lib provides some utils to work with protobuf messages together with MongoD
 
 Main reason to create this package is a [`protojson`](https://pkg.go.dev/google.golang.org/protobuf/encoding/protojson)
 package that encodes `proto` messages differently than an `encodying/json` package. This creates a big gap between
-ordinal golang structs and structs provided by a `protoc`.
+regular golang structs and structs provided by a `protoc`.
 
 ## [`Protobson`](pkg/protobson)
 ### Message
@@ -37,3 +37,7 @@ the `protobson.BsonPBRegistry` should be equal to default one, just with special
 
 If you customize your registry — you should read the [`registry.go`](pkg/protobson/registry.go) file and see how you can
 add required codecs into registry.
+
+## [Well Known Types](pkg/protobson/types)
+
+Partially implemented with some caveats. To see details - go to README in `protobson/types` package.

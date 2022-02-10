@@ -22,7 +22,7 @@ var ErrUnknownField = errors.New("unknown field")
 
 // ProtoMessageCodec is the Codec used for the protoreflect.ProtoMessage (aka proto.Message) values.
 type ProtoMessageCodec struct {
-	cache map[protoreflect.MessageType]*structDescription
+	cache map[reflect.Type]*structDescription
 	l     sync.RWMutex
 
 	// AllowPartial allows messages that have missing required fields to marshal
@@ -58,31 +58,26 @@ var _ bsoncodec.ValueDecoder = &ProtoMessageCodec{}
 // NewProtoMessageCodec returns a ProtoMessageCodec that uses p for struct tag parsing.
 func NewProtoMessageCodec() *ProtoMessageCodec {
 	return &ProtoMessageCodec{
-		cache: make(map[protoreflect.MessageType]*structDescription),
+		cache: make(map[reflect.Type]*structDescription),
 	}
 }
 
 // EncodeValue handles encoding generic struct types.
 func (sc *ProtoMessageCodec) EncodeValue(r bsoncodec.EncodeContext, vw bsonrw.ValueWriter, val reflect.Value) error {
-	// Either val or a pointer to val must implement ValueMarshaler
-	switch {
-	case !val.IsValid():
-		return bsoncodec.ValueEncoderError{Name: "MessageEncodeValue", Types: []reflect.Type{internal.TProtoMessage}, Received: val}
-	case val.Type().Implements(internal.TProtoMessage):
-		// If ValueMarshaler is implemented on a concrete type, make sure that val isn't a nil pointer
-		if isImplementationNil(val, internal.TProtoMessage) {
-			return vw.WriteNull()
-		}
-	case reflect.PtrTo(val.Type()).Implements(internal.TProtoMessage) && val.CanAddr():
-		val = val.Addr()
-	default:
-		return bsoncodec.ValueEncoderError{Name: "MessageEncodeValue", Types: []reflect.Type{internal.TProtoMessage}, Received: val}
+	val, err := internal.PrepareInterfaceForEncode("ProtoMessageEncodeValue", val, internal.TProtoMessage)
+	if err != nil {
+		return err
+	}
+
+	// If ValueMarshaler is implemented on a concrete type, make sure that val isn't a nil pointer
+	if isImplementationNil(val, internal.TProtoMessage) {
+		return vw.WriteNull()
 	}
 
 	protoMsg := val.Interface().(protoreflect.ProtoMessage)
 	protoDesc := protoMsg.ProtoReflect()
 
-	sd, err := sc.describeStruct(r.Registry, protoDesc)
+	sd, err := sc.describeStruct(r.Registry, protoDesc, val.Elem().Type())
 	if err != nil {
 		return err
 	}
@@ -113,7 +108,7 @@ func (sc *ProtoMessageCodec) EncodeValue(r bsoncodec.EncodeContext, vw bsonrw.Va
 			return err
 		}
 
-		rv2, err := sc.getRWValue(rv, protoMsg, desc.name, fd)
+		rv2, err := internal.GetRWValue(rv, protoMsg, desc.name)
 		if err != nil {
 			return err
 		}
@@ -138,22 +133,9 @@ func (sc *ProtoMessageCodec) EncodeValue(r bsoncodec.EncodeContext, vw bsonrw.Va
 // By default, map types in val will not be cleared. If a map has existing key/value pairs, it will be extended with the new ones from vr.
 // For slices, the decoder will set the length of the slice to zero and append all elements. The underlying array will not be cleared.
 func (sc *ProtoMessageCodec) DecodeValue(r bsoncodec.DecodeContext, vr bsonrw.ValueReader, val reflect.Value) error {
-	if !val.IsValid() || (!val.Type().Implements(internal.TProtoMessage) && !reflect.PtrTo(val.Type()).Implements(internal.TProtoMessage)) {
-		return bsoncodec.ValueDecoderError{Name: "MessageDecodeValue", Types: []reflect.Type{internal.TProtoMessage}, Received: val}
-	}
-
-	if val.Kind() == reflect.Ptr && val.IsNil() {
-		if !val.CanSet() {
-			return bsoncodec.ValueDecoderError{Name: "MessageDecodeValue", Types: []reflect.Type{internal.TProtoMessage}, Received: val}
-		}
-		val.Set(reflect.New(val.Type().Elem()))
-	}
-
-	if !val.Type().Implements(internal.TProtoMessage) {
-		if !val.CanAddr() {
-			return bsoncodec.ValueDecoderError{Name: "MessageDecodeValue", Types: []reflect.Type{internal.TProtoMessage}, Received: val}
-		}
-		val = val.Addr() // If they type doesn't implement the interface, a pointer to it must.
+	val, err2 := internal.PrepareInterfaceForDecode("MessageDecodeValue", val, internal.TProtoMessage)
+	if err2 != nil {
+		return err2
 	}
 
 	protoMsg := val.Interface().(protoreflect.ProtoMessage)
@@ -162,7 +144,7 @@ func (sc *ProtoMessageCodec) DecodeValue(r bsoncodec.DecodeContext, vr bsonrw.Va
 
 	protoDesc := protoMsg.ProtoReflect()
 
-	sd, err := sc.describeStruct(r.Registry, protoDesc)
+	sd, err := sc.describeStruct(r.Registry, protoDesc, val.Elem().Type())
 	if err != nil {
 		return err
 	}
@@ -204,43 +186,43 @@ func (sc *ProtoMessageCodec) DecodeValue(r bsoncodec.DecodeContext, vr bsonrw.Va
 				continue
 			}
 
-			return newDecodeError(desc.name, ErrUnknownField)
+			return internal.NewDecodeError(desc.name, ErrUnknownField)
 		}
 
 		fd = protoDesc.Descriptor().Fields().Get(desc.idx)
 		rv = protoDesc.NewField(fd)
-		field, err = sc.getRWValue(rv, protoMsg, desc.name, fd)
+		field, err = internal.GetRWValue(rv, protoMsg, desc.name)
 		if err != nil {
 			return err
 		}
 
 		dctx := bsoncodec.DecodeContext{Registry: r.Registry, Truncate: r.Truncate}
 		if desc.decoder == nil {
-			return newDecodeError(desc.name, bsoncodec.ErrNoDecoder{Type: field.Type()})
+			return internal.NewDecodeError(desc.name, bsoncodec.ErrNoDecoder{Type: field.Type()})
 		}
 
 		err = desc.decoder.DecodeValue(dctx, vr, field)
 		if err != nil {
-			return newDecodeError(desc.name, err)
+			return internal.NewDecodeError(desc.name, err)
 		}
 
 		switch rv.Interface().(type) {
 		case protoreflect.Map, protoreflect.List, protoreflect.EnumNumber:
 			// Field already point to struct enum
 		default:
-			decVal, err := reflectToProtoValue(field)
-			if errors.Is(err, errDirectSet) {
+			decVal, err := internal.ReflectToProtoValue(field)
+			if errors.Is(err, internal.ErrDirectSet) {
 				continue
 			}
 
 			if err != nil {
-				return newDecodeError(desc.name, err)
+				return internal.NewDecodeError(desc.name, err)
 			}
 
 			if en := fd.Enum(); en != nil && !sc.UseEnumNumbers {
 				evd := en.Values().ByName(protoreflect.Name(decVal.String()))
 				if evd == nil {
-					return newDecodeError(desc.name, errDecodeInvalidValue)
+					return internal.NewDecodeError(desc.name, errDecodeInvalidValue)
 				}
 
 				protoDesc.Set(fd, protoreflect.ValueOf(evd.Number()))
@@ -282,12 +264,12 @@ func (bi byIndex) Less(i, j int) bool {
 	return bi[i].idx < bi[j].idx
 }
 
-func (sc *ProtoMessageCodec) describeStruct(r *bsoncodec.Registry, protoDesc protoreflect.Message) (*structDescription, error) {
+func (sc *ProtoMessageCodec) describeStruct(r *bsoncodec.Registry, protoDesc protoreflect.Message, t reflect.Type) (*structDescription, error) {
 	fieldsDesc := protoDesc.Descriptor().Fields()
 	// We need to analyze the struct, including getting the tags, collecting
 	// information about inlining, and create a map of the field name to the field.
 	sc.l.RLock()
-	ds, exists := sc.cache[protoDesc.Type()]
+	ds, exists := sc.cache[t]
 	sc.l.RUnlock()
 	if exists {
 		return ds, nil
@@ -320,7 +302,7 @@ func (sc *ProtoMessageCodec) describeStruct(r *bsoncodec.Registry, protoDesc pro
 			msg = protoDesc.Interface()
 			sfType = reflect.ValueOf(msg).Elem().FieldByName(string(sf.Name())).Type()
 		default:
-			sfType = reflectIntoStd(sfv, sc.UseEnumNumbers)
+			sfType = internal.ReflectIntoStd(sfv, sc.UseEnumNumbers)
 		}
 
 		encoder, err := r.LookupEncoder(sfType)
@@ -353,7 +335,7 @@ func (sc *ProtoMessageCodec) describeStruct(r *bsoncodec.Registry, protoDesc pro
 	sort.Sort(byIndex(sd.fl))
 
 	sc.l.Lock()
-	sc.cache[protoDesc.Type()] = sd
+	sc.cache[t] = sd
 	sc.l.Unlock()
 
 	return sd, nil

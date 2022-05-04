@@ -3,7 +3,7 @@ module github.com/rdmrcv/go-protom
 go 1.17
 
 require (
-	go.mongodb.org/mongo-driver v1.9.0
+	go.mongodb.org/mongo-driver v1.9.1
 	google.golang.org/protobuf v1.28.0
 )
 

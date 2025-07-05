@@ -82,7 +82,7 @@ func PrepareInterfaceForEncode(where string, val reflect.Value, t reflect.Type) 
 	case !val.IsValid():
 		return reflect.Value{}, bson.ValueEncoderError{Name: where, Types: []reflect.Type{t}, Received: val}
 	case val.Type().Implements(t):
-	case reflect.PtrTo(val.Type()).Implements(t) && val.CanAddr():
+	case reflect.PointerTo(val.Type()).Implements(t) && val.CanAddr():
 		val = val.Addr()
 	default:
 		return reflect.Value{}, bson.ValueEncoderError{Name: where, Types: []reflect.Type{t}, Received: val}
@@ -92,7 +92,7 @@ func PrepareInterfaceForEncode(where string, val reflect.Value, t reflect.Type) 
 }
 
 func PrepareInterfaceForDecode(where string, val reflect.Value, t reflect.Type) (reflect.Value, error) {
-	if !val.IsValid() || (!val.Type().Implements(t) && !reflect.PtrTo(val.Type()).Implements(t)) {
+	if !val.IsValid() || (!val.Type().Implements(t) && !reflect.PointerTo(val.Type()).Implements(t)) {
 		return reflect.Value{}, bson.ValueDecoderError{Name: where, Types: []reflect.Type{t}, Received: val}
 	}
 
@@ -121,7 +121,7 @@ func PrepareValueForEncode(where string, val reflect.Value, t reflect.Type) (ref
 	case !val.IsValid():
 		return reflect.Value{}, bson.ValueEncoderError{Name: where, Types: []reflect.Type{t}, Received: val}
 	case val.Type().AssignableTo(t):
-	case reflect.PtrTo(val.Type()).AssignableTo(t) && val.CanAddr():
+	case reflect.PointerTo(val.Type()).AssignableTo(t) && val.CanAddr():
 		val = val.Addr()
 	default:
 		return reflect.Value{}, bson.ValueEncoderError{Name: where, Types: []reflect.Type{t}, Received: val}
@@ -131,7 +131,7 @@ func PrepareValueForEncode(where string, val reflect.Value, t reflect.Type) (ref
 }
 
 func PrepareValueForDecode(where string, val reflect.Value, t reflect.Type) (reflect.Value, error) {
-	if !val.IsValid() || (!val.Type().AssignableTo(t) && !reflect.PtrTo(val.Type()).AssignableTo(t)) {
+	if !val.IsValid() || (!val.Type().AssignableTo(t) && !reflect.PointerTo(val.Type()).AssignableTo(t)) {
 		return reflect.Value{}, bson.ValueDecoderError{Name: where, Types: []reflect.Type{t}, Received: val}
 	}
 

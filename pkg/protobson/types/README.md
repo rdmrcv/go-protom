@@ -1,14 +1,14 @@
-# Well Known Types
+# Well-Known Types
 
-Protobuf have a set of so-called Well Known Types which provide complex types useful in many situations. These types 
-require custom encode and decode functions. This set of types partially implemented in this package.
+Protobuf has a set of so-called Well Known Types which provide complex types useful in many situations. These types 
+require custom encode and decode functions. This set of types is partially implemented in this package.
 
 ## [`Empty`](empty.go) [Doc](https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#google.protobuf.Empty)
-Empty represent an empty object.
+Empty represents an empty object.
 
 When encode we produce document start and end with nothing in between.
 
-When decode we read document and throw an error if the document contain something.
+When decode, we read the document and throw an error if the document contains something.
 
 ## [`Duration`](duration.go) [Doc](https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#duration)
 Represent a span of time.
@@ -18,7 +18,7 @@ When decode and encode we use the `protojson`. String field will be produced.
 ## [`Timestamp`](timestamp.go) [Doc](https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#timestamp)
 Represent a time point.
 
-When decode and encode we fallback to the default `time.Time` encode/decode function already presented in the `bson`.
+When decode and encode we fall back to the default `time.Time` encode/decode function already presented in the `bson`.
 
 Time in `protojson` and `protobson` packages differs from each other.
 The `protobson` uses a `DateTime` type from the `mongo-driver` which loose precision but better integrated into the `MongoDB` data model.
@@ -28,8 +28,8 @@ The `protobson` uses a `DateTime` type from the `mongo-driver` which loose preci
 ## [`Struct`, `Value`, `ListValue`](struct.go) [Doc](https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#struct)
 Represent a JSON object.
 
-> When decode and encode we work with int/float/double precision pretty loosely. This might be changed in future if this
-> behavior will cause troubles.
+> When decode and encode, we work with int/float/double precision pretty loosely. This might be changed in the future if this
+> behavior causes trouble.
 
 ## [`Wrappers`](wrappers.go)
 [Float Doc](https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#google.protobuf.FloatValue),
@@ -44,5 +44,5 @@ Represent a JSON object.
 
 Represent some regular types.
 
-> When decode and encode we work with int/float/double precision pretty loosely. This might be changed in future if this
-> behavior will cause troubles.
+> When decode and encode, we work with int/float/double precision pretty loosely. This might be changed in future if this
+> behavior causes trouble.

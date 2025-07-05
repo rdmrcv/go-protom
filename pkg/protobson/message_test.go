@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rdmrcv/go-protom/pkg/internal"
+	"github.com/rdmrcv/go-protom/v2/pkg/internal"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
@@ -63,9 +63,11 @@ func TestProtoBsonCodec(t *testing.T) {
 }
 
 func TestWKT(t *testing.T) {
-	sv, err := structpb.NewStruct(map[string]interface{}{
-		"test": "some value",
-	})
+	sv, err := structpb.NewStruct(
+		map[string]interface{}{
+			"test": "some value",
+		},
+	)
 
 	if err != nil {
 		panic(err)

@@ -1,20 +1,24 @@
 # Go Proto MongoDB Utils
 
-The lib is not considered as stable and an API might be broken until `v1.x.x` version is tagged.
+The lib is compatible with the `go.mongodb.org/mongo-driver/v2`. If you want the same registry for 
+the `go.mongodb.org/mongo-driver` - use tags from `0.x.x`.
+
+The lib is not considered as stable and an API might be broken. It was tagged with `v2.x.x` to reflect 
+the `go.mongodb.org/mongo-driver/v2` compatibility not overall stabilization.
 
 This lib provides some utils to work with protobuf messages together with MongoDB.
 
 Main reason to create this package is a [`protojson`](https://pkg.go.dev/google.golang.org/protobuf/encoding/protojson)
-package that encodes `proto` messages differently than an `encodying/json` package. This creates a big gap between
+package that encodes `proto` messages differently than an `encoding/json` package. This creates a big gap between 
 regular golang structs and structs provided by a `protoc`.
 
-## [`Protobson`](pkg/protobson)
+## [`protobson`](pkg/protobson)
 ### Message
-This package is highly inspired by the original `protojson` package but bound to the `go.mongodb.org/mongo-driver` 
+This package is highly inspired by the original `protojson` package but bound to the `go.mongodb.org/mongo-driver/v2` 
 package.
 
 The package provides codecs and a registry that compatible with the `mongo-dirver` and fits well into the `mongo-driver` 
-encode/decode process. The codec designed mostly as intermediate component who can encode and decode the `proto.Message`
+encode/decode process. The codec designed mostly as an intermediate component who can encode and decode the `proto.Message`
 and leverage the `mongo-driver` registry machinery to encode or decode primitive types and lists/maps.
 
 ### Enum

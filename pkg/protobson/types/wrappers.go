@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/rdmrcv/go-protom/pkg/internal"
+	"github.com/rdmrcv/go-protom/v2/pkg/internal"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )

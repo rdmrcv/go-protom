@@ -1,8 +1,8 @@
 package protobson
 
 import (
-	"github.com/rdmrcv/go-protom/pkg/internal"
-	"github.com/rdmrcv/go-protom/pkg/protobson/types"
+	"github.com/rdmrcv/go-protom/v2/pkg/internal"
+	"github.com/rdmrcv/go-protom/v2/pkg/protobson/types"
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 

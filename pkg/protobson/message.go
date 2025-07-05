@@ -15,7 +15,6 @@ import (
 	"google.golang.org/protobuf/reflect/protoregistry"
 )
 
-var errEncodeInvalidValue = errors.New("cannot encode invalid element")
 var errDecodeInvalidValue = errors.New("cannot decode invalid element")
 
 var ErrUnknownField = errors.New("unknown field")
@@ -159,7 +158,7 @@ func (sc *ProtoMessageCodec) DecodeValue(r bson.DecodeContext, vr bson.ValueRead
 	var field reflect.Value
 	for {
 		name, vr, err := dr.ReadElement()
-		if err == bson.ErrEOD {
+		if errors.Is(err, bson.ErrEOD) {
 			break
 		}
 		if err != nil {
@@ -264,7 +263,11 @@ func (bi byIndex) Less(i, j int) bool {
 	return bi[i].idx < bi[j].idx
 }
 
-func (sc *ProtoMessageCodec) describeStruct(r *bson.Registry, protoDesc protoreflect.Message, t reflect.Type) (*structDescription, error) {
+func (sc *ProtoMessageCodec) describeStruct(
+	r *bson.Registry,
+	protoDesc protoreflect.Message,
+	t reflect.Type,
+) (*structDescription, error) {
 	fieldsDesc := protoDesc.Descriptor().Fields()
 	// We need to analyze the struct, including getting the tags, collecting
 	// information about inlining, and create a map of the field name to the field.

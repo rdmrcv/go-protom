@@ -8,4 +8,4 @@ current_dir_name:=$(notdir $(current_dir))
 ./test.pb.go:
 	protoc -I $(current_dir) \
 			test.proto \
-			--go_out=. --go_opt=module=github.com/rdmrcv/go-protom/pkg/internal
+			--go_out=. --go_opt=module=github.com/rdmrcv/go-protom/v2/pkg/internal

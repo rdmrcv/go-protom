@@ -190,5 +190,6 @@ func unmarshalWithRegistry(reg *bson.Registry, data []byte, val interface{}) err
 	vr := bson.NewDocumentReader(bytes.NewReader(data))
 	dec := bson.NewDecoder(vr)
 	dec.SetRegistry(reg)
+
 	return dec.Decode(val)
 }

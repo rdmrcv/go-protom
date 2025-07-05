@@ -5,9 +5,7 @@ import (
 	"reflect"
 
 	"github.com/rdmrcv/go-protom/pkg/internal"
-	"go.mongodb.org/mongo-driver/bson/bsoncodec"
-	"go.mongodb.org/mongo-driver/bson/bsonrw"
-	"go.mongodb.org/mongo-driver/bson/bsontype"
+	"go.mongodb.org/mongo-driver/v2/bson"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
@@ -19,8 +17,8 @@ var (
 type ProtoStructCodec struct {
 }
 
-var _ bsoncodec.ValueEncoder = &ProtoStructCodec{}
-var _ bsoncodec.ValueDecoder = &ProtoStructCodec{}
+var _ bson.ValueEncoder = &ProtoStructCodec{}
+var _ bson.ValueDecoder = &ProtoStructCodec{}
 
 // NewProtoStructCodec returns a ProtoStructCodec that uses p for struct tag parsing.
 func NewProtoStructCodec() *ProtoStructCodec {
@@ -28,7 +26,7 @@ func NewProtoStructCodec() *ProtoStructCodec {
 }
 
 // EncodeValue handles encoding of the `google.protobuf.Struct` message.
-func (sc *ProtoStructCodec) EncodeValue(r bsoncodec.EncodeContext, vw bsonrw.ValueWriter, val reflect.Value) error {
+func (sc *ProtoStructCodec) EncodeValue(r bson.EncodeContext, vw bson.ValueWriter, val reflect.Value) error {
 	val, err := internal.PrepareValueForEncode("ProtoStructEncode", val, internal.TProtoStruct)
 	if err != nil {
 		return err
@@ -52,7 +50,7 @@ func (sc *ProtoStructCodec) EncodeValue(r bsoncodec.EncodeContext, vw bsonrw.Val
 		vw, err = dw.WriteDocumentElement(key)
 		rv = reflect.ValueOf(value)
 
-		if err := encoder.EncodeValue(bsoncodec.EncodeContext{Registry: r.Registry}, vw, rv); err != nil {
+		if err := encoder.EncodeValue(bson.EncodeContext{Registry: r.Registry}, vw, rv); err != nil {
 			return err
 		}
 	}
@@ -61,7 +59,7 @@ func (sc *ProtoStructCodec) EncodeValue(r bsoncodec.EncodeContext, vw bsonrw.Val
 }
 
 // DecodeValue handles decoding of the `google.protobuf.Struct` message.
-func (sc *ProtoStructCodec) DecodeValue(r bsoncodec.DecodeContext, vr bsonrw.ValueReader, val reflect.Value) error {
+func (sc *ProtoStructCodec) DecodeValue(r bson.DecodeContext, vr bson.ValueReader, val reflect.Value) error {
 	val, err := internal.PrepareValueForDecode("ProtoStructDecodeValue", val, internal.TProtoStruct)
 	if err != nil {
 		return err
@@ -85,7 +83,7 @@ func (sc *ProtoStructCodec) DecodeValue(r bsoncodec.DecodeContext, vr bsonrw.Val
 
 	for {
 		name, vr2, err := dr.ReadElement()
-		if errors.Is(err, bsonrw.ErrEOD) {
+		if errors.Is(err, bson.ErrEOD) {
 			break
 		}
 		if err != nil {
@@ -95,7 +93,7 @@ func (sc *ProtoStructCodec) DecodeValue(r bsoncodec.DecodeContext, vr bsonrw.Val
 		vc := &structpb.Value{}
 
 		if err := decoder.DecodeValue(
-			bsoncodec.DecodeContext{Registry: r.Registry, Ancestor: val.Type()},
+			bson.DecodeContext{Registry: r.Registry},
 			vr2,
 			reflect.ValueOf(vc),
 		); err != nil {
@@ -118,7 +116,7 @@ func NewProtoStructValueCodec() *ProtoStructValueCodec {
 }
 
 // EncodeValue handles encoding of the `google.protobuf.Value` message.
-func (sc *ProtoStructValueCodec) EncodeValue(r bsoncodec.EncodeContext, vw bsonrw.ValueWriter, val reflect.Value) error {
+func (sc *ProtoStructValueCodec) EncodeValue(r bson.EncodeContext, vw bson.ValueWriter, val reflect.Value) error {
 	val, err := internal.PrepareValueForEncode("ProtoStructEncode", val, internal.TProtoStructValue)
 	if err != nil {
 		return err
@@ -142,14 +140,14 @@ func (sc *ProtoStructValueCodec) EncodeValue(r bsoncodec.EncodeContext, vw bsonr
 			return err
 		}
 
-		return decoder.EncodeValue(bsoncodec.EncodeContext{Registry: r.Registry}, vw, rv)
+		return decoder.EncodeValue(bson.EncodeContext{Registry: r.Registry}, vw, rv)
 	default:
 		return ErrUnknownValueKind
 	}
 }
 
 // DecodeValue handles decoding of the `google.protobuf.Value` message.
-func (sc *ProtoStructValueCodec) DecodeValue(r bsoncodec.DecodeContext, vr bsonrw.ValueReader, val reflect.Value) error {
+func (sc *ProtoStructValueCodec) DecodeValue(r bson.DecodeContext, vr bson.ValueReader, val reflect.Value) error {
 	val, err := internal.PrepareValueForDecode("ProtoStructDecodeValue", val, internal.TProtoStructValue)
 	if err != nil {
 		return err
@@ -158,45 +156,45 @@ func (sc *ProtoStructValueCodec) DecodeValue(r bsoncodec.DecodeContext, vr bsonr
 	protoMsg := val.Interface().(*structpb.Value)
 
 	switch vr.Type() {
-	case bsontype.Null:
+	case bson.TypeNull:
 		protoMsg.Kind = &structpb.Value_NullValue{NullValue: structpb.NullValue_NULL_VALUE}
 		return vr.ReadNull()
-	case bsontype.Int32:
+	case bson.TypeInt32:
 		v, err := vr.ReadInt32()
 		if err != nil {
 			return err
 		}
 
 		protoMsg.Kind = &structpb.Value_NumberValue{NumberValue: float64(v)}
-	case bsontype.Int64:
+	case bson.TypeInt64:
 		v, err := vr.ReadInt64()
 		if err != nil {
 			return err
 		}
 
 		protoMsg.Kind = &structpb.Value_NumberValue{NumberValue: float64(v)}
-	case bsontype.Double:
+	case bson.TypeDouble:
 		v, err := vr.ReadDouble()
 		if err != nil {
 			return err
 		}
 
 		protoMsg.Kind = &structpb.Value_NumberValue{NumberValue: v}
-	case bsontype.String:
+	case bson.TypeString:
 		v, err := vr.ReadString()
 		if err != nil {
 			return err
 		}
 
 		protoMsg.Kind = &structpb.Value_StringValue{StringValue: v}
-	case bsontype.Boolean:
+	case bson.TypeBoolean:
 		v, err := vr.ReadBoolean()
 		if err != nil {
 			return err
 		}
 
 		protoMsg.Kind = &structpb.Value_BoolValue{BoolValue: v}
-	case bsontype.Array:
+	case bson.TypeArray:
 		lv := &structpb.ListValue{}
 		rv := reflect.ValueOf(lv)
 
@@ -207,8 +205,8 @@ func (sc *ProtoStructValueCodec) DecodeValue(r bsoncodec.DecodeContext, vr bsonr
 			return err
 		}
 
-		return decoder.DecodeValue(bsoncodec.DecodeContext{Registry: r.Registry, Ancestor: val.Type()}, vr, rv)
-	case bsontype.EmbeddedDocument:
+		return decoder.DecodeValue(bson.DecodeContext{Registry: r.Registry}, vr, rv)
+	case bson.TypeEmbeddedDocument:
 		lv := &structpb.Struct{}
 		rv := reflect.ValueOf(lv)
 
@@ -219,7 +217,7 @@ func (sc *ProtoStructValueCodec) DecodeValue(r bsoncodec.DecodeContext, vr bsonr
 			return err
 		}
 
-		return decoder.DecodeValue(bsoncodec.DecodeContext{Registry: r.Registry, Ancestor: val.Type()}, vr, rv)
+		return decoder.DecodeValue(bson.DecodeContext{Registry: r.Registry}, vr, rv)
 	default:
 		return ErrUnknownValueKind
 	}
@@ -231,8 +229,8 @@ func (sc *ProtoStructValueCodec) DecodeValue(r bsoncodec.DecodeContext, vr bsonr
 type ProtoStructListValueCodec struct {
 }
 
-var _ bsoncodec.ValueEncoder = &ProtoStructListValueCodec{}
-var _ bsoncodec.ValueDecoder = &ProtoStructListValueCodec{}
+var _ bson.ValueEncoder = &ProtoStructListValueCodec{}
+var _ bson.ValueDecoder = &ProtoStructListValueCodec{}
 
 // NewProtoStructListValueCodec returns a ProtoStructListValueCodec that uses p for struct tag parsing.
 func NewProtoStructListValueCodec() *ProtoStructListValueCodec {
@@ -240,7 +238,7 @@ func NewProtoStructListValueCodec() *ProtoStructListValueCodec {
 }
 
 // EncodeValue handles encoding of the `google.protobuf.ListValue` message.
-func (sc *ProtoStructListValueCodec) EncodeValue(r bsoncodec.EncodeContext, vw bsonrw.ValueWriter, val reflect.Value) error {
+func (sc *ProtoStructListValueCodec) EncodeValue(r bson.EncodeContext, vw bson.ValueWriter, val reflect.Value) error {
 	val, err := internal.PrepareValueForEncode("ProtoStructEncode", val, internal.TProtoStruct)
 	if err != nil {
 		return err
@@ -268,7 +266,7 @@ func (sc *ProtoStructListValueCodec) EncodeValue(r bsoncodec.EncodeContext, vw b
 
 		rv = reflect.ValueOf(value)
 
-		if err := encoder.EncodeValue(bsoncodec.EncodeContext{Registry: r.Registry}, vw, rv); err != nil {
+		if err := encoder.EncodeValue(bson.EncodeContext{Registry: r.Registry}, vw, rv); err != nil {
 			return err
 		}
 	}
@@ -277,7 +275,7 @@ func (sc *ProtoStructListValueCodec) EncodeValue(r bsoncodec.EncodeContext, vw b
 }
 
 // DecodeValue handles decoding of the `google.protobuf.Struct` message.
-func (sc *ProtoStructListValueCodec) DecodeValue(r bsoncodec.DecodeContext, vr bsonrw.ValueReader, val reflect.Value) error {
+func (sc *ProtoStructListValueCodec) DecodeValue(r bson.DecodeContext, vr bson.ValueReader, val reflect.Value) error {
 	val, err := internal.PrepareValueForDecode("ProtoStructDecodeValue", val, internal.TProtoStruct)
 	if err != nil {
 		return err
@@ -299,7 +297,7 @@ func (sc *ProtoStructListValueCodec) DecodeValue(r bsoncodec.DecodeContext, vr b
 
 	for {
 		vr2, err := ar.ReadValue()
-		if errors.Is(err, bsonrw.ErrEOA) {
+		if errors.Is(err, bson.ErrEOA) {
 			break
 		}
 		if err != nil {
@@ -309,7 +307,7 @@ func (sc *ProtoStructListValueCodec) DecodeValue(r bsoncodec.DecodeContext, vr b
 		vc := &structpb.Value{}
 
 		if err := decoder.DecodeValue(
-			bsoncodec.DecodeContext{Registry: r.Registry, Ancestor: val.Type()},
+			bson.DecodeContext{Registry: r.Registry},
 			vr2,
 			reflect.ValueOf(vc),
 		); err != nil {

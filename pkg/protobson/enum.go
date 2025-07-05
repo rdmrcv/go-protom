@@ -5,8 +5,7 @@ import (
 	"sync"
 
 	"github.com/rdmrcv/go-protom/pkg/internal"
-	"go.mongodb.org/mongo-driver/bson/bsoncodec"
-	"go.mongodb.org/mongo-driver/bson/bsonrw"
+	"go.mongodb.org/mongo-driver/v2/bson"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
@@ -19,8 +18,8 @@ type ProtoEnumCodec struct {
 	UseEnumNumbers bool
 }
 
-var _ bsoncodec.ValueEncoder = &ProtoEnumCodec{}
-var _ bsoncodec.ValueDecoder = &ProtoEnumCodec{}
+var _ bson.ValueEncoder = &ProtoEnumCodec{}
+var _ bson.ValueDecoder = &ProtoEnumCodec{}
 
 // NewProtoEnumCodec returns a ProtoEnumCodec that uses p for struct tag parsing.
 func NewProtoEnumCodec() *ProtoEnumCodec {
@@ -30,7 +29,7 @@ func NewProtoEnumCodec() *ProtoEnumCodec {
 }
 
 // EncodeValue handles encoding generic struct types.
-func (sc *ProtoEnumCodec) EncodeValue(r bsoncodec.EncodeContext, vw bsonrw.ValueWriter, val reflect.Value) error {
+func (sc *ProtoEnumCodec) EncodeValue(r bson.EncodeContext, vw bson.ValueWriter, val reflect.Value) error {
 	val, err := internal.PrepareInterfaceForEncode("ProtoEnumEncodeValue", val, internal.TProtoEnum)
 	if err != nil {
 		return err
@@ -48,7 +47,7 @@ func (sc *ProtoEnumCodec) EncodeValue(r bsoncodec.EncodeContext, vw bsonrw.Value
 // DecodeValue implements the Codec interface.
 // By default, map types in val will not be cleared. If a map has existing key/value pairs, it will be extended with the new ones from vr.
 // For slices, the decoder will set the length of the slice to zero and append all elements. The underlying array will not be cleared.
-func (sc *ProtoEnumCodec) DecodeValue(r bsoncodec.DecodeContext, vr bsonrw.ValueReader, val reflect.Value) error {
+func (sc *ProtoEnumCodec) DecodeValue(r bson.DecodeContext, vr bson.ValueReader, val reflect.Value) error {
 	val, err := internal.PrepareInterfaceForDecode("ProtoEnumDecodeValue", val, internal.TProtoEnum)
 	if err != nil {
 		return err

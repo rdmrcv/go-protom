@@ -5,8 +5,7 @@ import (
 	"reflect"
 
 	"github.com/rdmrcv/go-protom/pkg/internal"
-	"go.mongodb.org/mongo-driver/bson/bsoncodec"
-	"go.mongodb.org/mongo-driver/bson/bsonrw"
+	"go.mongodb.org/mongo-driver/v2/bson"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/durationpb"
 )
@@ -15,8 +14,8 @@ import (
 type ProtoDurationCodec struct {
 }
 
-var _ bsoncodec.ValueEncoder = &ProtoDurationCodec{}
-var _ bsoncodec.ValueDecoder = &ProtoDurationCodec{}
+var _ bson.ValueEncoder = &ProtoDurationCodec{}
+var _ bson.ValueDecoder = &ProtoDurationCodec{}
 
 // NewProtoDurationCodec returns a ProtoDurationCodec.
 func NewProtoDurationCodec() *ProtoDurationCodec {
@@ -24,7 +23,7 @@ func NewProtoDurationCodec() *ProtoDurationCodec {
 }
 
 // EncodeValue handles encoding of the `google.protobuf.Duration` message.
-func (sc *ProtoDurationCodec) EncodeValue(r bsoncodec.EncodeContext, vw bsonrw.ValueWriter, val reflect.Value) error {
+func (sc *ProtoDurationCodec) EncodeValue(r bson.EncodeContext, vw bson.ValueWriter, val reflect.Value) error {
 	val, err := internal.PrepareValueForEncode("ProtoDurationEncode", val, internal.TProtoDuration)
 	if err != nil {
 		return err
@@ -45,7 +44,7 @@ func (sc *ProtoDurationCodec) EncodeValue(r bsoncodec.EncodeContext, vw bsonrw.V
 }
 
 // DecodeValue handles decoding of the `google.protobuf.Duration` message.
-func (sc *ProtoDurationCodec) DecodeValue(r bsoncodec.DecodeContext, vr bsonrw.ValueReader, val reflect.Value) error {
+func (sc *ProtoDurationCodec) DecodeValue(r bson.DecodeContext, vr bson.ValueReader, val reflect.Value) error {
 	val, err := internal.PrepareValueForDecode("ProtoDurationDecodeValue", val, internal.TProtoDuration)
 	if err != nil {
 		return err

@@ -1,12 +1,12 @@
 package protobson
 
 import (
+	"bytes"
 	"testing"
 	"time"
 
 	"github.com/rdmrcv/go-protom/pkg/internal"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/durationpb"
@@ -31,9 +31,9 @@ func TestProtoBsonCodec(t *testing.T) {
 		MapEnum: map[uint32]internal.EnumType{100: internal.EnumType_ANOTHER},
 	}
 
-	reg := NewBsonPBRegistryBuilder().Build()
+	reg := NewBsonPBRegistry()
 
-	bts, err := bson.MarshalWithRegistry(reg, msg)
+	bts, err := marshalWithRegistry(reg, msg)
 	if err != nil {
 		panic(err)
 	}
@@ -45,7 +45,7 @@ func TestProtoBsonCodec(t *testing.T) {
 
 	outMsg, outJsonMsg := &internal.Msg{}, &internal.Msg{}
 
-	if err := bson.UnmarshalWithRegistry(reg, bts, outMsg); err != nil {
+	if err := unmarshalWithRegistry(reg, bts, outMsg); err != nil {
 		panic(err)
 	}
 
@@ -75,7 +75,7 @@ func TestWKT(t *testing.T) {
 	// protobson uses bson datetime which loose precision.
 	// To compare values after decode we should prune that extra precision bytes
 	// before encode values via protojson.
-	tm := primitive.NewDateTimeFromTime(time.Now()).Time()
+	tm := bson.NewDateTimeFromTime(time.Now()).Time()
 
 	var msg = &internal.WKT{
 		EmptyField:    &emptypb.Empty{},
@@ -142,9 +142,9 @@ func TestWKT(t *testing.T) {
 		},
 	}
 
-	reg := NewBsonPBRegistryBuilder().Build()
+	reg := NewBsonPBRegistry()
 
-	bts, err := bson.MarshalWithRegistry(reg, msg)
+	bts, err := marshalWithRegistry(reg, msg)
 	if err != nil {
 		panic(err)
 	}
@@ -156,7 +156,7 @@ func TestWKT(t *testing.T) {
 
 	outMsg, outJsonMsg := &internal.WKT{}, &internal.WKT{}
 
-	if err := bson.UnmarshalWithRegistry(reg, bts, outMsg); err != nil {
+	if err := unmarshalWithRegistry(reg, bts, outMsg); err != nil {
 		panic(err)
 	}
 
@@ -171,4 +171,22 @@ func TestWKT(t *testing.T) {
 	if !proto.Equal(outMsg, outJsonMsg) {
 		t.Fatalf("messages is not equal to protojson")
 	}
+}
+
+func marshalWithRegistry(reg *bson.Registry, val interface{}) ([]byte, error) {
+	buf := new(bytes.Buffer)
+	vw := bson.NewDocumentWriter(buf)
+	enc := bson.NewEncoder(vw)
+	enc.SetRegistry(reg)
+	if err := enc.Encode(val); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
+func unmarshalWithRegistry(reg *bson.Registry, data []byte, val interface{}) error {
+	vr := bson.NewDocumentReader(bytes.NewReader(data))
+	dec := bson.NewDecoder(vr)
+	dec.SetRegistry(reg)
+	return dec.Decode(val)
 }

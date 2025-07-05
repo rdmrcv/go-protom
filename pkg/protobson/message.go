@@ -2,14 +2,14 @@ package protobson
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"sort"
 	"strings"
 	"sync"
 
 	"github.com/rdmrcv/go-protom/pkg/internal"
-	"go.mongodb.org/mongo-driver/bson/bsoncodec"
-	"go.mongodb.org/mongo-driver/bson/bsonrw"
+	"go.mongodb.org/mongo-driver/v2/bson"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/reflect/protoregistry"
@@ -52,8 +52,8 @@ type ProtoMessageCodec struct {
 	}
 }
 
-var _ bsoncodec.ValueEncoder = &ProtoMessageCodec{}
-var _ bsoncodec.ValueDecoder = &ProtoMessageCodec{}
+var _ bson.ValueEncoder = &ProtoMessageCodec{}
+var _ bson.ValueDecoder = &ProtoMessageCodec{}
 
 // NewProtoMessageCodec returns a ProtoMessageCodec that uses p for struct tag parsing.
 func NewProtoMessageCodec() *ProtoMessageCodec {
@@ -63,7 +63,7 @@ func NewProtoMessageCodec() *ProtoMessageCodec {
 }
 
 // EncodeValue handles encoding generic struct types.
-func (sc *ProtoMessageCodec) EncodeValue(r bsoncodec.EncodeContext, vw bsonrw.ValueWriter, val reflect.Value) error {
+func (sc *ProtoMessageCodec) EncodeValue(r bson.EncodeContext, vw bson.ValueWriter, val reflect.Value) error {
 	val, err := internal.PrepareInterfaceForEncode("ProtoMessageEncodeValue", val, internal.TProtoMessage)
 	if err != nil {
 		return err
@@ -94,7 +94,7 @@ func (sc *ProtoMessageCodec) EncodeValue(r bsoncodec.EncodeContext, vw bsonrw.Va
 		rv = protoDesc.Get(fd)
 
 		if desc.encoder == nil {
-			return bsoncodec.ErrNoEncoder{Type: reflect.TypeOf(rv.Interface())}
+			return fmt.Errorf("no encoder for type %v", reflect.TypeOf(rv.Interface()))
 		}
 
 		encoder := desc.encoder
@@ -113,7 +113,7 @@ func (sc *ProtoMessageCodec) EncodeValue(r bsoncodec.EncodeContext, vw bsonrw.Va
 			return err
 		}
 
-		ectx := bsoncodec.EncodeContext{Registry: r.Registry}
+		ectx := bson.EncodeContext{Registry: r.Registry}
 		err = encoder.EncodeValue(ectx, vw2, rv2)
 		if err != nil {
 			return err
@@ -132,7 +132,7 @@ func (sc *ProtoMessageCodec) EncodeValue(r bsoncodec.EncodeContext, vw bsonrw.Va
 // DecodeValue implements the Codec interface.
 // By default, map types in val will not be cleared. If a map has existing key/value pairs, it will be extended with the new ones from vr.
 // For slices, the decoder will set the length of the slice to zero and append all elements. The underlying array will not be cleared.
-func (sc *ProtoMessageCodec) DecodeValue(r bsoncodec.DecodeContext, vr bsonrw.ValueReader, val reflect.Value) error {
+func (sc *ProtoMessageCodec) DecodeValue(r bson.DecodeContext, vr bson.ValueReader, val reflect.Value) error {
 	val, err2 := internal.PrepareInterfaceForDecode("MessageDecodeValue", val, internal.TProtoMessage)
 	if err2 != nil {
 		return err2
@@ -159,7 +159,7 @@ func (sc *ProtoMessageCodec) DecodeValue(r bsoncodec.DecodeContext, vr bsonrw.Va
 	var field reflect.Value
 	for {
 		name, vr, err := dr.ReadElement()
-		if err == bsonrw.ErrEOD {
+		if err == bson.ErrEOD {
 			break
 		}
 		if err != nil {
@@ -196,9 +196,9 @@ func (sc *ProtoMessageCodec) DecodeValue(r bsoncodec.DecodeContext, vr bsonrw.Va
 			return err
 		}
 
-		dctx := bsoncodec.DecodeContext{Registry: r.Registry, Truncate: r.Truncate}
+		dctx := bson.DecodeContext{Registry: r.Registry}
 		if desc.decoder == nil {
-			return internal.NewDecodeError(desc.name, bsoncodec.ErrNoDecoder{Type: field.Type()})
+			return internal.NewDecodeError(desc.name, fmt.Errorf("no decoder for type %v", field.Type()))
 		}
 
 		err = desc.decoder.DecodeValue(dctx, vr, field)
@@ -250,8 +250,8 @@ type fieldDescription struct {
 	name      string // BSON key name
 	fieldName string // struct field name
 	idx       int
-	encoder   bsoncodec.ValueEncoder
-	decoder   bsoncodec.ValueDecoder
+	encoder   bson.ValueEncoder
+	decoder   bson.ValueDecoder
 }
 
 type byIndex []fieldDescription
@@ -264,7 +264,7 @@ func (bi byIndex) Less(i, j int) bool {
 	return bi[i].idx < bi[j].idx
 }
 
-func (sc *ProtoMessageCodec) describeStruct(r *bsoncodec.Registry, protoDesc protoreflect.Message, t reflect.Type) (*structDescription, error) {
+func (sc *ProtoMessageCodec) describeStruct(r *bson.Registry, protoDesc protoreflect.Message, t reflect.Type) (*structDescription, error) {
 	fieldsDesc := protoDesc.Descriptor().Fields()
 	// We need to analyze the struct, including getting the tags, collecting
 	// information about inlining, and create a map of the field name to the field.

@@ -5,9 +5,7 @@ import (
 	"reflect"
 
 	"github.com/rdmrcv/go-protom/pkg/internal"
-	"go.mongodb.org/mongo-driver/bson/bsoncodec"
-	"go.mongodb.org/mongo-driver/bson/bsonrw"
-	"go.mongodb.org/mongo-driver/bson/bsontype"
+	"go.mongodb.org/mongo-driver/v2/bson"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
@@ -24,8 +22,8 @@ func (d decodeBinaryError) Error() string {
 type ProtoWrappersCodec struct {
 }
 
-var _ bsoncodec.ValueEncoder = &ProtoWrappersCodec{}
-var _ bsoncodec.ValueDecoder = &ProtoWrappersCodec{}
+var _ bson.ValueEncoder = &ProtoWrappersCodec{}
+var _ bson.ValueDecoder = &ProtoWrappersCodec{}
 
 // NewProtoWrappersCodec returns a ProtoWrappersCodec that uses p for struct tag parsing.
 func NewProtoWrappersCodec() *ProtoWrappersCodec {
@@ -33,7 +31,7 @@ func NewProtoWrappersCodec() *ProtoWrappersCodec {
 }
 
 // EncodeValue handles encoding of the `google.protobuf.*Value` message.
-func (sc *ProtoWrappersCodec) EncodeValue(r bsoncodec.EncodeContext, vw bsonrw.ValueWriter, val reflect.Value) error {
+func (sc *ProtoWrappersCodec) EncodeValue(r bson.EncodeContext, vw bson.ValueWriter, val reflect.Value) error {
 	var err error
 
 	switch rv := val.Interface().(type) {
@@ -103,7 +101,7 @@ func (sc *ProtoWrappersCodec) EncodeValue(r bsoncodec.EncodeContext, vw bsonrw.V
 
 		return vw.WriteDouble(rv.GetValue())
 	default:
-		return bsoncodec.ValueEncoderError{Name: "ProtoWrappersEncode", Types: []reflect.Type{
+		return bson.ValueEncoderError{Name: "ProtoWrappersEncode", Types: []reflect.Type{
 			internal.TProtoWrappedString,
 			internal.TProtoWrappedBytes,
 			internal.TProtoWrappedBool,
@@ -120,7 +118,7 @@ func (sc *ProtoWrappersCodec) EncodeValue(r bsoncodec.EncodeContext, vw bsonrw.V
 }
 
 // DecodeValue handles decoding of the `google.protobuf.*Value` message.
-func (sc *ProtoWrappersCodec) DecodeValue(r bsoncodec.DecodeContext, vr bsonrw.ValueReader, val reflect.Value) error {
+func (sc *ProtoWrappersCodec) DecodeValue(r bson.DecodeContext, vr bson.ValueReader, val reflect.Value) error {
 	var err error
 
 	var rv reflect.Value
@@ -149,7 +147,7 @@ func (sc *ProtoWrappersCodec) DecodeValue(r bsoncodec.DecodeContext, vr bsonrw.V
 			return err
 		}
 
-		if subtype != bsontype.BinaryGeneric && subtype != bsontype.BinaryBinaryOld {
+		if subtype != bson.TypeBinaryGeneric && subtype != bson.TypeBinaryBinaryOld {
 			return decodeBinaryError{subtype: subtype, typeName: "[]byte"}
 		}
 
@@ -241,7 +239,7 @@ func (sc *ProtoWrappersCodec) DecodeValue(r bsoncodec.DecodeContext, vr bsonrw.V
 
 		rv = reflect.ValueOf(v)
 	default:
-		return bsoncodec.ValueEncoderError{Name: "ProtoWrappersEncode", Types: []reflect.Type{
+		return bson.ValueEncoderError{Name: "ProtoWrappersEncode", Types: []reflect.Type{
 			internal.TProtoWrappedString,
 			internal.TProtoWrappedBytes,
 			internal.TProtoWrappedBool,

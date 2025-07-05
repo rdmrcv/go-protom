@@ -4,7 +4,7 @@ import (
 	"errors"
 	"reflect"
 
-	"go.mongodb.org/mongo-driver/bson/bsoncodec"
+	"go.mongodb.org/mongo-driver/v2/bson"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
@@ -80,12 +80,12 @@ func PrepareInterfaceForEncode(where string, val reflect.Value, t reflect.Type) 
 	// Either val or a pointer to val must implement ValueMarshaler
 	switch {
 	case !val.IsValid():
-		return reflect.Value{}, bsoncodec.ValueEncoderError{Name: where, Types: []reflect.Type{t}, Received: val}
+		return reflect.Value{}, bson.ValueEncoderError{Name: where, Types: []reflect.Type{t}, Received: val}
 	case val.Type().Implements(t):
 	case reflect.PtrTo(val.Type()).Implements(t) && val.CanAddr():
 		val = val.Addr()
 	default:
-		return reflect.Value{}, bsoncodec.ValueEncoderError{Name: where, Types: []reflect.Type{t}, Received: val}
+		return reflect.Value{}, bson.ValueEncoderError{Name: where, Types: []reflect.Type{t}, Received: val}
 	}
 
 	return val, nil
@@ -93,12 +93,12 @@ func PrepareInterfaceForEncode(where string, val reflect.Value, t reflect.Type) 
 
 func PrepareInterfaceForDecode(where string, val reflect.Value, t reflect.Type) (reflect.Value, error) {
 	if !val.IsValid() || (!val.Type().Implements(t) && !reflect.PtrTo(val.Type()).Implements(t)) {
-		return reflect.Value{}, bsoncodec.ValueDecoderError{Name: where, Types: []reflect.Type{t}, Received: val}
+		return reflect.Value{}, bson.ValueDecoderError{Name: where, Types: []reflect.Type{t}, Received: val}
 	}
 
 	if val.Kind() == reflect.Ptr && val.IsNil() {
 		if !val.CanSet() {
-			return reflect.Value{}, bsoncodec.ValueDecoderError{Name: where, Types: []reflect.Type{t}, Received: val}
+			return reflect.Value{}, bson.ValueDecoderError{Name: where, Types: []reflect.Type{t}, Received: val}
 		}
 
 		val.Set(reflect.New(val.Type().Elem()))
@@ -106,7 +106,7 @@ func PrepareInterfaceForDecode(where string, val reflect.Value, t reflect.Type) 
 
 	if !val.Type().Implements(t) {
 		if !val.CanAddr() {
-			return reflect.Value{}, bsoncodec.ValueDecoderError{Name: where, Types: []reflect.Type{t}, Received: val}
+			return reflect.Value{}, bson.ValueDecoderError{Name: where, Types: []reflect.Type{t}, Received: val}
 		}
 
 		val = val.Addr() // If they type doesn't implement the interface, a pointer to it must.
@@ -119,12 +119,12 @@ func PrepareValueForEncode(where string, val reflect.Value, t reflect.Type) (ref
 	// Either val or a pointer to val must implement ValueMarshaler
 	switch {
 	case !val.IsValid():
-		return reflect.Value{}, bsoncodec.ValueEncoderError{Name: where, Types: []reflect.Type{t}, Received: val}
+		return reflect.Value{}, bson.ValueEncoderError{Name: where, Types: []reflect.Type{t}, Received: val}
 	case val.Type().AssignableTo(t):
 	case reflect.PtrTo(val.Type()).AssignableTo(t) && val.CanAddr():
 		val = val.Addr()
 	default:
-		return reflect.Value{}, bsoncodec.ValueEncoderError{Name: where, Types: []reflect.Type{t}, Received: val}
+		return reflect.Value{}, bson.ValueEncoderError{Name: where, Types: []reflect.Type{t}, Received: val}
 	}
 
 	return val, nil
@@ -132,12 +132,12 @@ func PrepareValueForEncode(where string, val reflect.Value, t reflect.Type) (ref
 
 func PrepareValueForDecode(where string, val reflect.Value, t reflect.Type) (reflect.Value, error) {
 	if !val.IsValid() || (!val.Type().AssignableTo(t) && !reflect.PtrTo(val.Type()).AssignableTo(t)) {
-		return reflect.Value{}, bsoncodec.ValueDecoderError{Name: where, Types: []reflect.Type{t}, Received: val}
+		return reflect.Value{}, bson.ValueDecoderError{Name: where, Types: []reflect.Type{t}, Received: val}
 	}
 
 	if val.Kind() == reflect.Ptr && val.IsNil() {
 		if !val.CanSet() {
-			return reflect.Value{}, bsoncodec.ValueDecoderError{Name: where, Types: []reflect.Type{t}, Received: val}
+			return reflect.Value{}, bson.ValueDecoderError{Name: where, Types: []reflect.Type{t}, Received: val}
 		}
 
 		val.Set(reflect.New(val.Type().Elem()))
@@ -145,7 +145,7 @@ func PrepareValueForDecode(where string, val reflect.Value, t reflect.Type) (ref
 
 	if !val.Type().AssignableTo(t) {
 		if !val.CanAddr() {
-			return reflect.Value{}, bsoncodec.ValueDecoderError{Name: where, Types: []reflect.Type{t}, Received: val}
+			return reflect.Value{}, bson.ValueDecoderError{Name: where, Types: []reflect.Type{t}, Received: val}
 		}
 
 		val = val.Addr() // If they type doesn't implement the interface, a pointer to it must.

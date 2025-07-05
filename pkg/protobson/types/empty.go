@@ -5,8 +5,7 @@ import (
 	"reflect"
 
 	"github.com/rdmrcv/go-protom/pkg/internal"
-	"go.mongodb.org/mongo-driver/bson/bsoncodec"
-	"go.mongodb.org/mongo-driver/bson/bsonrw"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 var (
@@ -17,8 +16,8 @@ var (
 type ProtoEmptyCodec struct {
 }
 
-var _ bsoncodec.ValueEncoder = &ProtoEmptyCodec{}
-var _ bsoncodec.ValueDecoder = &ProtoEmptyCodec{}
+var _ bson.ValueEncoder = &ProtoEmptyCodec{}
+var _ bson.ValueDecoder = &ProtoEmptyCodec{}
 
 // NewProtoEmptyCodec returns a ProtoEmptyCodec that uses p for struct tag parsing.
 func NewProtoEmptyCodec() *ProtoEmptyCodec {
@@ -26,7 +25,7 @@ func NewProtoEmptyCodec() *ProtoEmptyCodec {
 }
 
 // EncodeValue handles encoding of the `google.protobuf.Empty` message.
-func (sc *ProtoEmptyCodec) EncodeValue(r bsoncodec.EncodeContext, vw bsonrw.ValueWriter, val reflect.Value) error {
+func (sc *ProtoEmptyCodec) EncodeValue(r bson.EncodeContext, vw bson.ValueWriter, val reflect.Value) error {
 	val, err := internal.PrepareValueForEncode("ProtoEmptyEncode", val, internal.TProtoEmpty)
 	if err != nil {
 		return err
@@ -41,7 +40,7 @@ func (sc *ProtoEmptyCodec) EncodeValue(r bsoncodec.EncodeContext, vw bsonrw.Valu
 }
 
 // DecodeValue handles decoding of the `google.protobuf.Empty` message.
-func (sc *ProtoEmptyCodec) DecodeValue(r bsoncodec.DecodeContext, vr bsonrw.ValueReader, val reflect.Value) error {
+func (sc *ProtoEmptyCodec) DecodeValue(r bson.DecodeContext, vr bson.ValueReader, val reflect.Value) error {
 	val, err := internal.PrepareValueForDecode("ProtoEmptyDecodeValue", val, internal.TProtoEmpty)
 	if err != nil {
 		return err
@@ -52,7 +51,7 @@ func (sc *ProtoEmptyCodec) DecodeValue(r bsoncodec.DecodeContext, vr bsonrw.Valu
 		return err
 	}
 
-	if _, _, err := dr.ReadElement(); err == nil || !errors.Is(err, bsonrw.ErrEOD) {
+	if _, _, err := dr.ReadElement(); err == nil || !errors.Is(err, bson.ErrEOD) {
 		return ErrEmptyIsNotEmpty
 	}
 

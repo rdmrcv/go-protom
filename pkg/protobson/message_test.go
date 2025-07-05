@@ -5,8 +5,7 @@ import (
 	"time"
 
 	"github.com/rdmrcv/go-protom/pkg/internal"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/v2/bson"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/durationpb"
@@ -31,7 +30,7 @@ func TestProtoBsonCodec(t *testing.T) {
 		MapEnum: map[uint32]internal.EnumType{100: internal.EnumType_ANOTHER},
 	}
 
-	reg := NewBsonPBRegistryBuilder().Build()
+	reg := NewBsonPBRegistry()
 
 	bts, err := bson.MarshalWithRegistry(reg, msg)
 	if err != nil {
@@ -75,7 +74,7 @@ func TestWKT(t *testing.T) {
 	// protobson uses bson datetime which loose precision.
 	// To compare values after decode we should prune that extra precision bytes
 	// before encode values via protojson.
-	tm := primitive.NewDateTimeFromTime(time.Now()).Time()
+	tm := bson.NewDateTimeFromTime(time.Now()).Time()
 
 	var msg = &internal.WKT{
 		EmptyField:    &emptypb.Empty{},
@@ -142,7 +141,7 @@ func TestWKT(t *testing.T) {
 		},
 	}
 
-	reg := NewBsonPBRegistryBuilder().Build()
+	reg := NewBsonPBRegistry()
 
 	bts, err := bson.MarshalWithRegistry(reg, msg)
 	if err != nil {

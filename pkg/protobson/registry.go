@@ -3,18 +3,14 @@ package protobson
 import (
 	"github.com/rdmrcv/go-protom/pkg/internal"
 	"github.com/rdmrcv/go-protom/pkg/protobson/types"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/bsoncodec"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 // BsonPBRegistry that provide protojson compatible BSON encoding.
-var BsonPBRegistry = NewBsonPBRegistryBuilder().Build()
+var BsonPBRegistry = NewBsonPBRegistry()
 
-func NewBsonPBRegistryBuilder() *bsoncodec.RegistryBuilder {
-	rb := bsoncodec.NewRegistryBuilder()
-	bsoncodec.DefaultValueEncoders{}.RegisterDefaultEncoders(rb)
-	bsoncodec.DefaultValueDecoders{}.RegisterDefaultDecoders(rb)
-	bson.PrimitiveCodecs{}.RegisterPrimitiveCodecs(rb)
+func NewBsonPBRegistry() *bson.Registry {
+	reg := bson.NewRegistry()
 
 	bpbcodec := NewProtoMessageCodec()
 	benumcodec := NewProtoEnumCodec()
@@ -26,41 +22,40 @@ func NewBsonPBRegistryBuilder() *bsoncodec.RegistryBuilder {
 	bstructlistvaluecodec := types.NewProtoStructListValueCodec()
 	bemptycodec := types.NewProtoEmptyCodec()
 
-	rb.
-		RegisterTypeEncoder(internal.TProtoEmpty, bsoncodec.ValueEncoderFunc(bemptycodec.EncodeValue)).
-		RegisterTypeDecoder(internal.TProtoEmpty, bsoncodec.ValueDecoderFunc(bemptycodec.DecodeValue)).
-		RegisterTypeEncoder(internal.TProtoStruct, bsoncodec.ValueEncoderFunc(bstructcodec.EncodeValue)).
-		RegisterTypeDecoder(internal.TProtoStruct, bsoncodec.ValueDecoderFunc(bstructcodec.DecodeValue)).
-		RegisterTypeEncoder(internal.TProtoStructValue, bsoncodec.ValueEncoderFunc(bstructvaluecodec.EncodeValue)).
-		RegisterTypeDecoder(internal.TProtoStructValue, bsoncodec.ValueDecoderFunc(bstructvaluecodec.DecodeValue)).
-		RegisterTypeEncoder(internal.TProtoStructListValue, bsoncodec.ValueEncoderFunc(bstructlistvaluecodec.EncodeValue)).
-		RegisterTypeDecoder(internal.TProtoStructListValue, bsoncodec.ValueDecoderFunc(bstructlistvaluecodec.DecodeValue)).
-		RegisterTypeEncoder(internal.TProtoDuration, bsoncodec.ValueEncoderFunc(bdurationcodec.EncodeValue)).
-		RegisterTypeDecoder(internal.TProtoDuration, bsoncodec.ValueDecoderFunc(bdurationcodec.DecodeValue)).
-		RegisterTypeEncoder(internal.TProtoTimestamp, bsoncodec.ValueEncoderFunc(btimestampcodec.EncodeValue)).
-		RegisterTypeDecoder(internal.TProtoTimestamp, bsoncodec.ValueDecoderFunc(btimestampcodec.DecodeValue)).
-		RegisterTypeEncoder(internal.TProtoWrappedString, bsoncodec.ValueEncoderFunc(bwrapperscodec.EncodeValue)).
-		RegisterTypeDecoder(internal.TProtoWrappedString, bsoncodec.ValueDecoderFunc(bwrapperscodec.DecodeValue)).
-		RegisterTypeEncoder(internal.TProtoWrappedBytes, bsoncodec.ValueEncoderFunc(bwrapperscodec.EncodeValue)).
-		RegisterTypeDecoder(internal.TProtoWrappedBytes, bsoncodec.ValueDecoderFunc(bwrapperscodec.DecodeValue)).
-		RegisterTypeEncoder(internal.TProtoWrappedBool, bsoncodec.ValueEncoderFunc(bwrapperscodec.EncodeValue)).
-		RegisterTypeDecoder(internal.TProtoWrappedBool, bsoncodec.ValueDecoderFunc(bwrapperscodec.DecodeValue)).
-		RegisterTypeEncoder(internal.TProtoWrappedUInt32, bsoncodec.ValueEncoderFunc(bwrapperscodec.EncodeValue)).
-		RegisterTypeDecoder(internal.TProtoWrappedUInt32, bsoncodec.ValueDecoderFunc(bwrapperscodec.DecodeValue)).
-		RegisterTypeEncoder(internal.TProtoWrappedInt32, bsoncodec.ValueEncoderFunc(bwrapperscodec.EncodeValue)).
-		RegisterTypeDecoder(internal.TProtoWrappedInt32, bsoncodec.ValueDecoderFunc(bwrapperscodec.DecodeValue)).
-		RegisterTypeEncoder(internal.TProtoWrappedUInt64, bsoncodec.ValueEncoderFunc(bwrapperscodec.EncodeValue)).
-		RegisterTypeDecoder(internal.TProtoWrappedUInt64, bsoncodec.ValueDecoderFunc(bwrapperscodec.DecodeValue)).
-		RegisterTypeEncoder(internal.TProtoWrappedInt64, bsoncodec.ValueEncoderFunc(bwrapperscodec.EncodeValue)).
-		RegisterTypeDecoder(internal.TProtoWrappedInt64, bsoncodec.ValueDecoderFunc(bwrapperscodec.DecodeValue)).
-		RegisterTypeEncoder(internal.TProtoWrappedFloat, bsoncodec.ValueEncoderFunc(bwrapperscodec.EncodeValue)).
-		RegisterTypeDecoder(internal.TProtoWrappedFloat, bsoncodec.ValueDecoderFunc(bwrapperscodec.DecodeValue)).
-		RegisterTypeEncoder(internal.TProtoWrappedDouble, bsoncodec.ValueEncoderFunc(bwrapperscodec.EncodeValue)).
-		RegisterTypeDecoder(internal.TProtoWrappedDouble, bsoncodec.ValueDecoderFunc(bwrapperscodec.DecodeValue)).
-		RegisterHookEncoder(internal.TProtoEnum, bsoncodec.ValueEncoderFunc(benumcodec.EncodeValue)).
-		RegisterHookDecoder(internal.TProtoEnum, bsoncodec.ValueDecoderFunc(benumcodec.DecodeValue)).
-		RegisterHookEncoder(internal.TProtoMessage, bsoncodec.ValueEncoderFunc(bpbcodec.EncodeValue)).
-		RegisterHookDecoder(internal.TProtoMessage, bsoncodec.ValueDecoderFunc(bpbcodec.DecodeValue))
+	reg.RegisterTypeEncoder(internal.TProtoEmpty, bson.ValueEncoderFunc(bemptycodec.EncodeValue))
+	reg.RegisterTypeDecoder(internal.TProtoEmpty, bson.ValueDecoderFunc(bemptycodec.DecodeValue))
+	reg.RegisterTypeEncoder(internal.TProtoStruct, bson.ValueEncoderFunc(bstructcodec.EncodeValue))
+	reg.RegisterTypeDecoder(internal.TProtoStruct, bson.ValueDecoderFunc(bstructcodec.DecodeValue))
+	reg.RegisterTypeEncoder(internal.TProtoStructValue, bson.ValueEncoderFunc(bstructvaluecodec.EncodeValue))
+	reg.RegisterTypeDecoder(internal.TProtoStructValue, bson.ValueDecoderFunc(bstructvaluecodec.DecodeValue))
+	reg.RegisterTypeEncoder(internal.TProtoStructListValue, bson.ValueEncoderFunc(bstructlistvaluecodec.EncodeValue))
+	reg.RegisterTypeDecoder(internal.TProtoStructListValue, bson.ValueDecoderFunc(bstructlistvaluecodec.DecodeValue))
+	reg.RegisterTypeEncoder(internal.TProtoDuration, bson.ValueEncoderFunc(bdurationcodec.EncodeValue))
+	reg.RegisterTypeDecoder(internal.TProtoDuration, bson.ValueDecoderFunc(bdurationcodec.DecodeValue))
+	reg.RegisterTypeEncoder(internal.TProtoTimestamp, bson.ValueEncoderFunc(btimestampcodec.EncodeValue))
+	reg.RegisterTypeDecoder(internal.TProtoTimestamp, bson.ValueDecoderFunc(btimestampcodec.DecodeValue))
+	reg.RegisterTypeEncoder(internal.TProtoWrappedString, bson.ValueEncoderFunc(bwrapperscodec.EncodeValue))
+	reg.RegisterTypeDecoder(internal.TProtoWrappedString, bson.ValueDecoderFunc(bwrapperscodec.DecodeValue))
+	reg.RegisterTypeEncoder(internal.TProtoWrappedBytes, bson.ValueEncoderFunc(bwrapperscodec.EncodeValue))
+	reg.RegisterTypeDecoder(internal.TProtoWrappedBytes, bson.ValueDecoderFunc(bwrapperscodec.DecodeValue))
+	reg.RegisterTypeEncoder(internal.TProtoWrappedBool, bson.ValueEncoderFunc(bwrapperscodec.EncodeValue))
+	reg.RegisterTypeDecoder(internal.TProtoWrappedBool, bson.ValueDecoderFunc(bwrapperscodec.DecodeValue))
+	reg.RegisterTypeEncoder(internal.TProtoWrappedUInt32, bson.ValueEncoderFunc(bwrapperscodec.EncodeValue))
+	reg.RegisterTypeDecoder(internal.TProtoWrappedUInt32, bson.ValueDecoderFunc(bwrapperscodec.DecodeValue))
+	reg.RegisterTypeEncoder(internal.TProtoWrappedInt32, bson.ValueEncoderFunc(bwrapperscodec.EncodeValue))
+	reg.RegisterTypeDecoder(internal.TProtoWrappedInt32, bson.ValueDecoderFunc(bwrapperscodec.DecodeValue))
+	reg.RegisterTypeEncoder(internal.TProtoWrappedUInt64, bson.ValueEncoderFunc(bwrapperscodec.EncodeValue))
+	reg.RegisterTypeDecoder(internal.TProtoWrappedUInt64, bson.ValueDecoderFunc(bwrapperscodec.DecodeValue))
+	reg.RegisterTypeEncoder(internal.TProtoWrappedInt64, bson.ValueEncoderFunc(bwrapperscodec.EncodeValue))
+	reg.RegisterTypeDecoder(internal.TProtoWrappedInt64, bson.ValueDecoderFunc(bwrapperscodec.DecodeValue))
+	reg.RegisterTypeEncoder(internal.TProtoWrappedFloat, bson.ValueEncoderFunc(bwrapperscodec.EncodeValue))
+	reg.RegisterTypeDecoder(internal.TProtoWrappedFloat, bson.ValueDecoderFunc(bwrapperscodec.DecodeValue))
+	reg.RegisterTypeEncoder(internal.TProtoWrappedDouble, bson.ValueEncoderFunc(bwrapperscodec.EncodeValue))
+	reg.RegisterTypeDecoder(internal.TProtoWrappedDouble, bson.ValueDecoderFunc(bwrapperscodec.DecodeValue))
+	reg.RegisterInterfaceEncoder(internal.TProtoEnum, bson.ValueEncoderFunc(benumcodec.EncodeValue))
+	reg.RegisterInterfaceDecoder(internal.TProtoEnum, bson.ValueDecoderFunc(benumcodec.DecodeValue))
+	reg.RegisterInterfaceEncoder(internal.TProtoMessage, bson.ValueEncoderFunc(bpbcodec.EncodeValue))
+	reg.RegisterInterfaceDecoder(internal.TProtoMessage, bson.ValueDecoderFunc(bpbcodec.DecodeValue))
 
-	return rb
+	return reg
 }
